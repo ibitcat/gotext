@@ -1,0 +1,29 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"X-Generator: Poedit 3.4.2\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# test
+msgctxt "问候1"
+msgid "你好"
+msgstr "hello"
+
+#, fuzzy
+msgctxt "问候2"
+msgid "你好"
+msgstr ""
+"hello\n"
+"hi"
+
+# 测试注释
+#: aaa bbbb
+msgid "世界"
+msgstr "world"

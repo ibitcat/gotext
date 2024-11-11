@@ -26,6 +26,8 @@
 - Ready to use inside Go templates.
 - Objects are serializable to []byte to store them in cache.
 - Support for Go Modules.
+- 优化 po 文件解析
+- 支持解析注释
 
 
 # License

@@ -118,6 +118,33 @@ func (l *Locale) findExt(dom, ext string) string {
 	return ""
 }
 
+func (l *Locale) GetPath() string {
+	pathname := path.Join(l.path, l.lang, "LC_MESSAGES")
+	if l.dirExists(pathname) {
+		return pathname
+	}
+
+	if len(l.lang) > 2 {
+		pathname = path.Join(l.path, l.lang[:2], "LC_MESSAGES")
+		if l.dirExists(pathname) {
+			return pathname
+		}
+	}
+
+	pathname = path.Join(l.path, l.lang)
+	if l.dirExists(pathname) {
+		return pathname
+	}
+
+	if len(l.lang) > 2 {
+		pathname = path.Join(l.path, l.lang[:2])
+		if l.dirExists(pathname) {
+			return pathname
+		}
+	}
+	return ""
+}
+
 // GetActualLanguage inspects the filesystem and decides whether to strip
 // a CC part of the ll_CC locale string.
 func (l *Locale) GetActualLanguage(dom string) string {
@@ -159,6 +186,14 @@ func (l *Locale) fileExists(filename string) bool {
 	}
 	_, err := os.Stat(filename)
 	return err == nil
+}
+
+func (l *Locale) dirExists(pathname string) bool {
+	info, err := os.Stat(pathname)
+	if err == nil && info.IsDir() {
+		return true
+	}
+	return false
 }
 
 // AddDomain creates a new domain for a given locale object and initializes the Po object.
@@ -415,6 +450,67 @@ func (l *Locale) IsTranslatedNDC(dom string, str string, n int, ctx string) bool
 	return translator.GetDomain().IsTranslatedNC(str, n, ctx)
 }
 
+// Add source references for a given translation
+func (l *Locale) AddRefs(str string, refs ...string) {
+	l.AddDRefs(l.GetDomain(), str, refs...)
+}
+
+// Add source references for a given translation
+func (l *Locale) AddDRefs(dom string, str string, refs ...string) {
+	l.Lock()
+	defer l.Unlock()
+
+	if l.Domains == nil {
+		return
+	}
+	translator, ok := l.Domains[dom]
+	if !ok {
+		return
+	}
+
+	translator.GetDomain().AddRefs(str, refs)
+}
+
+// Clear source references for a given translation
+func (l *Locale) ClearRefs(str string) {
+	l.AddDRefs(l.GetDomain(), str)
+}
+
+// Clear source references for a given translation
+func (l *Locale) ClearDRefs(dom string, str string) {
+	l.Lock()
+	defer l.Unlock()
+
+	if l.Domains == nil {
+		return
+	}
+	translator, ok := l.Domains[dom]
+	if !ok {
+		return
+	}
+
+	translator.GetDomain().ClearRefs(str)
+}
+
+// Clear all source references
+func (l *Locale) ClearAllRefs() {
+	l.ClearDAllRefs(l.GetDomain())
+}
+
+func (l *Locale) ClearDAllRefs(dom string) {
+	l.Lock()
+	defer l.Unlock()
+
+	if l.Domains == nil {
+		return
+	}
+	translator, ok := l.Domains[dom]
+	if !ok {
+		return
+	}
+	translator.GetDomain().ClearAllRefs()
+}
+
 // LocaleEncoding is used as intermediary storage to encode Locale objects to Gob.
 type LocaleEncoding struct {
 	Path          string
@@ -475,4 +571,30 @@ func (l *Locale) UnmarshalBinary(data []byte) error {
 	}
 
 	return nil
+}
+
+// MarshalPo
+func (l *Locale) MarshalPo() bool {
+	return l.MarshalPoD(l.GetDomain())
+}
+
+func (l *Locale) MarshalPoD(dom string) bool {
+	l.RLock()
+	defer l.RUnlock()
+
+	if l.Domains == nil {
+		return false
+	}
+	translator, ok := l.Domains[dom]
+	if !ok {
+		return false
+	}
+
+	poBytes, err := translator.GetDomain().MarshalText()
+	if err != nil {
+		return false
+	}
+	filename := path.Join(l.GetPath(), dom+".po")
+	err = os.WriteFile(filename, poBytes, 0o644)
+	return err == nil
 }
