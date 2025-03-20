@@ -1,6 +1,8 @@
 module main
 
-go 1.22.1
+go 1.23.5
+
+toolchain go1.24.1
 
 require github.com/ibitcat/gotext v0.0.0-00010101000000-000000000000
 
